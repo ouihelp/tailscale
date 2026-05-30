@@ -3412,6 +3412,11 @@ type ServiceAction struct {
 	// in client menus when there are multiple actions to select from.
 	// If empty, a display name may be inferred from the Type field.
 	DisplayName string `json:",omitzero"`
+
+	// Attributes is an optional key-value map carrying arbitrary data.
+	// Clients may choose to use all, some, or none of these attributes
+	// to drive UI or behavior.
+	Attributes map[string]string `json:",omitzero"`
 }
 
 // ServiceDetails describes a Service visible to this node.
