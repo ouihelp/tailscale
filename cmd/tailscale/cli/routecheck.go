@@ -18,6 +18,8 @@ import (
 	jsonv2 "github.com/go-json-experiment/json"
 	"github.com/go-json-experiment/json/jsontext"
 	"github.com/peterbourgon/ff/v3/ffcli"
+
+	"tailscale.com/cmd/tailscale/cli/jsonoutput"
 	"tailscale.com/net/routecheck"
 )
 
@@ -88,10 +90,7 @@ func printRouteCheckReport(rp *routecheck.Report) error {
 	}
 
 	if enc != nil {
-		out := struct {
-			Done   time.Time                   `json:"done"`
-			Routes routecheck.RoutablePrefixes `json:"routes"`
-		}{
+		out := jsonoutput.RouteCheckReport{
 			Done:   rp.Done,
 			Routes: routes,
 		}
