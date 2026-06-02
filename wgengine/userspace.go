@@ -694,13 +694,22 @@ func (e *userspaceEngine) maybeReconfigWireguardLocked() error {
 	// Rebuild the prefix-match peer routing table from the current
 	// (wireguard-filtered) peer list and publish it atomically.
 	rt := &bart.Table[key.NodePublic]{}
+	active := 0
 	for _, p := range full.Peers {
 		for _, pfx := range p.AllowedIPs {
 			rt.Insert(pfx, p.PublicKey)
 		}
+		// Count peers wireguard-go has already instantiated. LookupActivePeer
+		// (unlike LookupPeer) does not trigger on-demand creation, so this is a
+		// pure read of the current active set.
+		if _, ok := e.wgdev.LookupActivePeer(p.PublicKey.Raw32()); ok {
+			active++
+		}
 	}
 	e.peerByIPRoute.Store(rt)
 
+	metricNumPeersAvailable.Set(int64(len(full.Peers)))
+	metricNumPeersActive.Set(int64(active))
 	e.logf("wgengine: Reconfig: configuring userspace WireGuard config (with %d peers)", len(full.Peers))
 	if err := wgcfg.ReconfigDevice(e.wgdev, &full, e.logf); err != nil {
 		e.logf("wgdev.Reconfig: %v", err)
@@ -1634,6 +1643,20 @@ var (
 
 	metricNumMajorChanges = clientmetric.NewCounter("wgengine_major_changes")
 	metricNumMinorChanges = clientmetric.NewCounter("wgengine_minor_changes")
+
+	// metricNumPeersAvailable is the number of peers in the config last pushed
+	// to wireguard-go: the set wireguard-go may instantiate on demand via the
+	// PeerLookupFunc, not the set currently active. It is a
+	// packet-filter-filtered subset of the netmap (so <=
+	// magicsock_netmap_num_peers) and a superset of wgengine_peers_active.
+	metricNumPeersAvailable = clientmetric.NewGauge("wgengine_peers_available")
+
+	// metricNumPeersActive is how many of the available peers wireguard-go has
+	// actually instantiated (an active session) as of the last config push.
+	// This is the active count from the old "N/M peers" reconfig log line that
+	// went away when LazyWG was removed; it is sampled at config-push time, not
+	// continuously.
+	metricNumPeersActive = clientmetric.NewGauge("wgengine_peers_active")
 
 	metricTSMPDiscoKeyAdvertisementSent  = clientmetric.NewCounter("magicsock_tsmp_disco_key_advertisement_sent")
 	metricTSMPDiscoKeyAdvertisementError = clientmetric.NewCounter("magicsock_tsmp_disco_key_advertisement_error")
