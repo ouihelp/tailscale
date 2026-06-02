@@ -1960,7 +1960,7 @@ func (n *nftablesRunner) DelStatefulRule(tunname string) error {
 }
 
 // makeConnmarkRestoreExprs creates nftables expressions to restore mark from conntrack.
-// Implements: ct state established,related ct mark & 0xff0000 != 0 meta mark set ct mark & 0xff0000
+// Implements: ct state established,related ct mark & 0xf000 != 0 meta mark set ct mark & 0xf000
 func makeConnmarkRestoreExprs() []expr.Any {
 	return []expr.Any{
 		// Load conntrack state into register 1
@@ -1988,7 +1988,7 @@ func makeConnmarkRestoreExprs() []expr.Any {
 			Register: 1,
 			Key:      expr.CtKeyMARK,
 		},
-		// Mask to Tailscale mark bits (0xff0000)
+		// Mask to Tailscale mark bits (0xf000)
 		&expr.Bitwise{
 			SourceRegister: 1,
 			DestRegister:   1,
@@ -2006,7 +2006,7 @@ func makeConnmarkRestoreExprs() []expr.Any {
 }
 
 // makeConnmarkSaveExprs creates nftables expressions to save mark to conntrack.
-// Implements: ct state new meta mark & 0xff0000 != 0 ct mark set meta mark & 0xff0000
+// Implements: ct state new meta mark & 0xf000 != 0 ct mark set meta mark & 0xf000
 func makeConnmarkSaveExprs() []expr.Any {
 	return []expr.Any{
 		// Load conntrack state into register 1
@@ -2032,7 +2032,7 @@ func makeConnmarkSaveExprs() []expr.Any {
 			Key:      expr.MetaKeyMARK,
 			Register: 1,
 		},
-		// Mask to Tailscale mark bits (0xff0000)
+		// Mask to Tailscale mark bits (0xf000)
 		&expr.Bitwise{
 			SourceRegister: 1,
 			DestRegister:   1,

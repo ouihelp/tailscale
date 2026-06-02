@@ -371,19 +371,19 @@ func TestAddAndDelConnmarkSaveRule(t *testing.T) {
 		"--ctstate", "ESTABLISHED,RELATED",
 		"-j", "CONNMARK",
 		"--restore-mark",
-		"--nfmask", "0xff0000",
-		"--ctmask", "0xff0000",
+		"--nfmask", "0xf000",
+		"--ctmask", "0xf000",
 	}
 
 	outputArgs := []string{
 		"-m", "conntrack",
 		"--ctstate", "NEW",
 		"-m", "mark",
-		"!", "--mark", "0x0/0xff0000",
+		"!", "--mark", "0x0/0xf000",
 		"-j", "CONNMARK",
 		"--save-mark",
-		"--nfmask", "0xff0000",
-		"--ctmask", "0xff0000",
+		"--nfmask", "0xf000",
+		"--ctmask", "0xf000",
 	}
 
 	t.Run("with_ipv6", func(t *testing.T) {
