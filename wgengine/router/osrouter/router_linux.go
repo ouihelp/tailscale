@@ -106,7 +106,8 @@ type linuxRouter struct {
 	localRoutes       map[netip.Prefix]bool
 	snatSubnetRoutes  bool
 	statefulFiltering bool
-	connmarkEnabled   bool // whether connmark rules are currently enabled
+	connmarkEnabled   bool      // whether connmark rules are currently enabled
+	srcValidMarkCheck sync.Once // bound opt-out diagnostics to once per router lifetime
 	netfilterMode     preftype.NetfilterMode
 	netfilterKind     string
 	cgnatMode         linuxfw.CGNATMode
@@ -570,9 +571,7 @@ func (r *linuxRouter) Set(cfg *router.Config) error {
 		// connmark restore in mangle/PREROUTING is ineffective — rp_filter
 		// does its routing lookup with fwmark=0, ignoring the restored
 		// bypass mark, and drops reply packets as martians.
-		if err := writeSysctl("net.ipv4.conf.all.src_valid_mark", "1"); err != nil {
-			r.logf("warning: failed to enable src_valid_mark: %v", err)
-		}
+		configureSrcValidMark(disableSrcValidMark(), &r.srcValidMarkCheck, os.DirFS("/proc/sys/net/ipv4/conf"), writeSysctl, r.logf)
 	default:
 		r.logf("disabling connmark-based rp_filter workaround")
 		if err := r.nfr.DelConnmarkSaveRule(); err != nil {

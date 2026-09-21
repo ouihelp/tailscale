@@ -29,3 +29,24 @@ local endpoints. The patch also supports the upstream address filtering.
 This only filters local endpoint gathering, not all learned peer endpoints,
 routes or STUN results. It is not a guaranteed migration fix and does not
 replace routing or firewall policy. Defaults remain unchanged when unset.
+
+## 3. Opt out of the global src_valid_mark write
+
+Set `TS_DISABLE_SRC_VALID_MARK=true` to prevent Tailscale's new global
+`src_valid_mark` write. This is opt-in; default upstream behavior is unchanged.
+The switch never resets existing sysctls, `rp_filter`, or connmark state.
+Existing host settings therefore still require independent verification.
+
+A one-time diagnostic checks effective strict reverse-path filtering using
+`max(all, interface)`. This is diagnostic only, not a claim of universal
+strict-RPF compatibility; routing and mark interactions remain host-specific.
+
+[Upstream issue #19796](https://github.com/tailscale/tailscale/issues/19796)
+is open. [PR #19860](https://github.com/tailscale/tailscale/pull/19860)
+is open and draft, proposes a different, broader routing approach, and is
+**not incorporated** in this fork.
+
+The intended new-cluster environment combines `TS_AVOID_INTERFACES=cilium*`
+with `TS_DISABLE_SRC_VALID_MARK=true`. Existing clusters are outside this
+patch set's migration scope. Focused unit tests cover the opt-out and diagnostic;
+privileged kernel behavior requires separate native host validation.
