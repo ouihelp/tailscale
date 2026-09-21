@@ -104,8 +104,10 @@ After both architectures pass the operator's live release gate:
    archives, even from the same tag. Record the tested hashes in release notes.
 
 Rollback to `v1.96.4-ouihelp.1` retains the same mark allocation but loses both
-new knobs: the old binary ignores them and can re-enable global src_valid_mark.
-A binary downgrade alone does not restore sysctls or previous conntrack state.
-Use the operator's explicit sysctl/environment rollback procedure, preserve node
-state, and recheck traffic. Do not fall back to unpatched upstream binaries on
-Cilium nodes without evaluating the different marks.
+new knobs: the old binary ignores them. That specific old version does not
+contain the global src_valid_mark write; do not confuse it with stock 1.98+
+binaries. A binary downgrade alone still does not undo sysctl changes made by
+other processes or restore previous conntrack state. Use the operator's explicit
+sysctl/environment rollback procedure, preserve node state, and recheck traffic.
+Do not fall back to unpatched upstream binaries on Cilium nodes without
+evaluating the different marks.
