@@ -548,7 +548,7 @@ func (i *iptablesRunner) AddConnmarkSaveRule() error {
 		for _, rule := range rules {
 			if strings.Contains(rule, "CONNMARK") &&
 				strings.Contains(rule, "restore-mark") &&
-				strings.Contains(rule, "ctmask 0xff0000") {
+				strings.Contains(rule, "ctmask "+fwmarkMask) {
 				// Rules already exist, skip adding
 				return nil
 			}
