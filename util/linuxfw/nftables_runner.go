@@ -2126,7 +2126,7 @@ func (n *nftablesRunner) DelStatefulRule(tunname string) error {
 }
 
 // makeConnmarkRestoreExprs creates nftables expressions to restore mark from conntrack.
-// Implements: ct state established,related ct mark & 0xff0000 != 0 meta mark set ct mark & 0xff0000
+// Implements: ct state established,related ct mark & 0xf000 != 0 meta mark set ct mark & 0xf000
 //
 // LIMITATION: Unlike iptables CONNMARK --restore-mark with --nfmask, this implementation
 // overwrites non-Tailscale bits in the packet mark rather than merging them. This is a
@@ -2135,14 +2135,14 @@ func (n *nftablesRunner) DelStatefulRule(tunname string) error {
 // The nftables Bitwise expression only supports: (register & CONSTANT_MASK) ^ CONSTANT_XOR.
 // It cannot perform register-to-register operations needed for perfect bit preservation:
 //
-//	meta mark = (meta mark & ~0xff0000) | (ct mark & 0xff0000)
+//	meta mark = (meta mark & ~0xf000) | (ct mark & 0xf000)
 //	                 ^^^^^                   ^^^^^^^
 //	            needs meta mark         and ct mark combined
 //
 // In contrast, iptables CONNMARK is a specialized kernel module with custom C code that
 // can atomically merge marks from different sources.
 //
-// The conditional check (ct mark & 0xff0000 != 0) prevents the worst case of wiping all
+// The conditional check (ct mark & 0xf000 != 0) prevents the worst case of wiping all
 // mark bits to zero. Perfect bit preservation would require kernel
 // changes to add register-to-register bitwise operations to nftables.
 func makeConnmarkRestoreExprs() []expr.Any {
@@ -2172,7 +2172,7 @@ func makeConnmarkRestoreExprs() []expr.Any {
 			Register: 1,
 			Key:      expr.CtKeyMARK,
 		},
-		// Mask to Tailscale mark bits (0xff0000)
+		// Mask to Tailscale mark bits (0xf000)
 		&expr.Bitwise{
 			SourceRegister: 1,
 			DestRegister:   1,
@@ -2186,7 +2186,7 @@ func makeConnmarkRestoreExprs() []expr.Any {
 			Register: 1,
 			Data:     []byte{0, 0, 0, 0},
 		},
-		// Set packet mark from register 1 (contains ct mark & 0xff0000)
+		// Set packet mark from register 1 (contains ct mark & 0xf000)
 		&expr.Meta{
 			Key:            expr.MetaKeyMARK,
 			SourceRegister: true,
@@ -2196,7 +2196,7 @@ func makeConnmarkRestoreExprs() []expr.Any {
 }
 
 // makeConnmarkSaveExprs creates nftables expressions to save mark to conntrack.
-// Implements: ct state new meta mark & 0xff0000 != 0 ct mark set meta mark & 0xff0000
+// Implements: ct state new meta mark & 0xf000 != 0 ct mark set meta mark & 0xf000
 func makeConnmarkSaveExprs() []expr.Any {
 	return []expr.Any{
 		// Load conntrack state into register 1
@@ -2222,7 +2222,7 @@ func makeConnmarkSaveExprs() []expr.Any {
 			Key:      expr.MetaKeyMARK,
 			Register: 1,
 		},
-		// Mask to Tailscale mark bits (0xff0000)
+		// Mask to Tailscale mark bits (0xf000)
 		&expr.Bitwise{
 			SourceRegister: 1,
 			DestRegister:   1,
