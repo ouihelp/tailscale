@@ -4,6 +4,8 @@ https://tailscale.com
 
 Private WireGuard® networks made easy
 
+Ouihelp fork: see the [patch notes and scope](docs/ouihelp-fork.md).
+
 ## Overview
 
 This repository contains the majority of Tailscale's open source code.
